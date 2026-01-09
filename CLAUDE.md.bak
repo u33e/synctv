@@ -1,0 +1,198 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## 项目概述
+
+SyncTV 是一个远程同步观影/直播服务器，允许用户远程一起观看电影和直播。支持同步观看、直播解析、聊天、弹幕、视频代理缓存等功能。
+
+## 技术栈
+
+- **语言**: Go 1.25.3
+- **Web 框架**: Gin (github.com/gin-gonic/gin)
+- **前端**: Vue.js (通过 synctv-web 子模块)
+- **数据库**: SQLite3 (默认)、MySQL、PostgreSQL (GORM)
+- **实时通信**: Gorilla WebSocket, RTMP (livelib)
+- **OAuth2**: 支持多种提供商 (GitHub, Google, QQ, 微信等)
+
+## 常用命令
+
+### 构建
+
+**使用 go-cross (推荐)**:
+```bash
+go install github.com/zijiren233/go-cross@v1
+go-cross --version=v1.0.0 -use-default-cc-cxx -bin-name-no-suffix
+```
+
+**Docker 构建**:
+```bash
+docker build -t synctv:latest .
+```
+
+构建产物输出到 `build/` 目录。
+
+### 测试
+
+```bash
+# 运行所有测试
+go test -v -timeout 30s -count=1 ./...
+
+# 代码检查
+golangci-lint run
+```
+
+### 运行
+
+```bash
+# 启动服务器
+synctv server
+
+# 指定数据目录
+synctv server --data-dir ./
+
+# 禁用 Web 前端
+synctv server --disable-web
+
+# 开发模式
+synctv server --dev
+```
+
+## 架构概览
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    前端 (Vue.js)                      │
+│                 (synctv-web 子模块)                   │
+└────────────────────┬────────────────────────────────────┘
+                     │ HTTP/WebSocket
+┌────────────────────▼────────────────────────────────────┐
+│              Gin HTTP 服务器 (server/)                 │
+│  路由层 → 中间件层 → 处理器层 (handlers/)              │
+└────────────────────┬────────────────────────────────────┘
+                     │
+        ┌────────────▼─────────────┐
+        │   业务操作层 (internal/op/)│
+        └────────────┬─────────────┘
+                     │
+    ┌────────────────┼────────────────┐
+┌───▼───┐      ┌────▼────┐    ┌───▼───┐
+│ Hub   │      │  Room   │    │ User  │
+│(WS Hub│      │ Manager │    │Manager│
+│广播)  │      └────┬────┘    └───┬───┘
+└───────┘           │            │
+    └───────────────┼────────────┘
+                    │
+        ┌───────────▼───────────┐
+        │   数据库层 (GORM)      │
+        └───────────┬───────────┘
+                    │
+        ┌───────────▼───────────┐
+        │ SQLite/MySQL/Postgres │
+        └───────────────────────┘
+```
+
+## 目录结构
+
+| 目录 | 说明 |
+|------|------|
+| `cmd/` | CLI 命令实现 (Cobra)，包括 admin/flags/setting/user/root/server |
+| `internal/` | 内部包 |
+| `internal/bootstrap/` | 启动初始化 (config/db/provider/rtmp/setting) |
+| `internal/conf/` | 配置结构定义 |
+| `internal/db/` | 数据库访问层 |
+| `internal/model/` | 数据模型 |
+| `internal/op/` | 业务操作层 (hub.go, room.go, user.go, movie.go) |
+| `internal/provider/` | OAuth2 提供商 (providers/aggregations/plugins) |
+| `internal/rtmp/` | RTMP 服务器 |
+| `internal/settings/` | 动态设置系统 |
+| `server/` | HTTP 服务器 (handlers/middlewares/router) |
+| `server/handlers/proxy/` | 视频代理 (HLS/FLV) |
+| `server/handlers/vendors/` | 第三方厂商集成 (Bilibili/Alist/Emby) |
+| `proto/` | Protobuf 定义 (message/provider) |
+| `utils/` | 工具函数 |
+| `vendors/` | 厂商库子模块 |
+| `synctv-web/` | 前端子模块 |
+| `helm/` | Helm Chart (Kubernetes) |
+
+## 核心模块
+
+### Hub (WebSocket Hub)
+- 位置: `internal/op/hub.go`
+- 职责: 管理所有 WebSocket 连接，广播消息到房间，处理连接/断开，心跳检测
+
+### Room Manager
+- 位置: `internal/op/room.go`
+- 职责: 房间创建删除、影片列表管理、成员权限、同步状态
+
+### Movie Proxy
+- 位置: `server/handlers/proxy/`
+- 职责: 视频/HLS/FLV 代理，M3U8 解析，缓存机制
+
+### Settings System
+- 位置: `internal/settings/`
+- 职责: 动态配置系统，支持运行时修改，持久化到数据库
+
+### OAuth2 Providers
+- 位置: `internal/provider/`
+- 职责: 多种登录方式，可扩展提供商系统，支持插件
+
+## 配置
+
+### 环境变量 (前缀 SYNCTV_)
+
+| 变量 | 说明 |
+|------|------|
+| `DATA_DIR` | 数据目录 (默认: ~/.synctv) |
+| `SKIP_CONFIG` | 跳过配置文件加载 |
+| `SKIP_ENV_CONFIG` | 跳过环境变量加载 |
+| `DISABLE_UPDATE_CHECK` | 禁用更新检查 |
+| `DISABLE_WEB` | 禁用 Web 前端 |
+| `DEV` | 开发模式 |
+
+### 配置文件示例
+
+```yaml
+log:
+  level: info
+  file_path: ""
+  color: true
+
+server:
+  http:
+    listen: "0.0.0.0"
+    port: 8080
+    cert_path: ""
+    key_path: ""
+  rtmp:
+    enable: false
+    listen: "0.0.0.0"
+    port: 8080
+  proxy_cache_path: "/tmp/synctv"
+
+jwt:
+  secret: ""
+  expire: 24h
+
+database:
+  type: "sqlite3"  # mysql, postgres
+  name: "synctv"
+  host: "localhost"
+  port: 3306
+  user: ""
+  password: ""
+```
+
+## 重要注意事项
+
+- 首次启动时会初始化 `root/root` 用户，请及时修改密码
+- 用户注册需要 OAuth2 服务配置
+- 视频流量代理和缓存可降低源站压力
+- 支持 Bilibili 直播解析
+- WebRTC 语音通话已实现，视频和屏幕共享开发中
+
+## 相关链接
+
+- 文档: https://docs.synctv.wiki
+- 演示站点: https://demo.synctv.wiki
+- 许可证: AGPL-3.0

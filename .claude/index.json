@@ -1,0 +1,300 @@
+{
+  "timestamp": "2026-01-10T00:45:00+0800",
+  "root": {
+    "path": ".",
+    "documentation": "CLAUDE.md",
+    "last_updated": "2026-01-10T00:45:00+0800"
+  },
+  "modules": [
+    {
+      "path": "cmd",
+      "name": "CLI 命令层",
+      "documentation": "cmd/CLAUDE.md",
+      "entry": "cmd/root.go, cmd/server.go",
+      "interfaces": [],
+      "tests": null,
+      "config": null,
+      "data_models": null,
+      "created": true
+    },
+    {
+      "path": "internal/bootstrap",
+      "name": "启动初始化",
+      "documentation": "internal/bootstrap/CLAUDE.md",
+      "entry": "internal/bootstrap/init.go",
+      "interfaces": [],
+      "tests": null,
+      "config": "internal/conf/",
+      "data_models": null,
+      "created": true
+    },
+    {
+      "path": "internal/op",
+      "name": "业务操作层",
+      "documentation": "internal/op/CLAUDE.md",
+      "entry": "internal/op/hub.go, internal/op/room.go, internal/op/movie.go, internal/op/user.go",
+      "interfaces": [],
+      "tests": null,
+      "config": null,
+      "data_models": null,
+      "created": true
+    },
+    {
+      "path": "internal/provider",
+      "name": "OAuth2 提供商",
+      "documentation": "internal/provider/CLAUDE.md",
+      "entry": "internal/provider/provider.go",
+      "interfaces": [],
+      "tests": null,
+      "config": "internal/conf/oauth2.go",
+      "data_models": null,
+      "created": true
+    },
+    {
+      "path": "internal/rtmp",
+      "name": "RTMP 服务",
+      "documentation": "internal/rtmp/CLAUDE.md",
+      "entry": "internal/rtmp/rtmp.go",
+      "interfaces": [],
+      "tests": null,
+      "config": "internal/conf/server.go",
+      "data_models": null,
+      "created": true
+    },
+    {
+      "path": "internal/model",
+      "name": "数据模型",
+      "documentation": "internal/model/CLAUDE.md",
+      "entry": null,
+      "interfaces": [],
+      "tests": null,
+      "config": null,
+      "data_models": "User, Room, Movie, RoomMember, Current, Setting, VendorBackend, UserProvider",
+      "created": true
+    },
+    {
+      "path": "internal/db",
+      "name": "数据库层",
+      "documentation": "internal/db/CLAUDE.md",
+      "entry": "internal/db/db.go",
+      "interfaces": [],
+      "tests": null,
+      "config": null,
+      "data_models": null,
+      "created": true
+    },
+    {
+      "path": "internal/conf",
+      "name": "配置系统",
+      "documentation": "internal/conf/CLAUDE.md",
+      "entry": null,
+      "interfaces": [],
+      "tests": null,
+      "config": "internal/conf/",
+      "data_models": null,
+      "created": true
+    },
+    {
+      "path": "internal/settings",
+      "name": "动态设置",
+      "documentation": "internal/settings/CLAUDE.md",
+      "entry": null,
+      "interfaces": [],
+      "tests": null,
+      "config": null,
+      "data_models": null,
+      "created": true
+    },
+    {
+      "path": "internal/cache",
+      "name": "缓存系统",
+      "documentation": "internal/cache/CLAUDE.md",
+      "entry": null,
+      "interfaces": [],
+      "tests": null,
+      "config": null,
+      "data_models": null,
+      "created": true
+    },
+    {
+      "path": "internal/captcha",
+      "name": "验证码",
+      "documentation": "internal/captcha/CLAUDE.md",
+      "entry": "internal/captcha/captcha.go",
+      "interfaces": [],
+      "tests": null,
+      "config": null,
+      "data_models": null,
+      "created": true
+    },
+    {
+      "path": "internal/email",
+      "name": "邮件服务",
+      "documentation": "internal/email/CLAUDE.md",
+      "entry": "internal/email/email.go",
+      "interfaces": [],
+      "tests": null,
+      "config": null,
+      "data_models": null,
+      "created": true
+    },
+    {
+      "path": "internal/version",
+      "name": "版本管理",
+      "documentation": "internal/version/CLAUDE.md",
+      "entry": null,
+      "interfaces": [],
+      "tests": null,
+      "config": null,
+      "data_models": null,
+      "created": true
+    },
+    {
+      "path": "internal/vendor",
+      "name": "厂商集成",
+      "documentation": "internal/vendor/CLAUDE.md",
+      "entry": "internal/vendor/vendor.go",
+      "interfaces": [],
+      "tests": null,
+      "config": null,
+      "data_models": null,
+      "created": true
+    },
+    {
+      "path": "internal/sysNotify",
+      "name": "系统通知",
+      "documentation": "internal/sysNotify/CLAUDE.md",
+      "entry": "internal/sysNotify/sysnotify.go",
+      "interfaces": [],
+      "tests": null,
+      "config": null,
+      "data_models": null,
+      "created": true
+    },
+    {
+      "path": "server",
+      "name": "HTTP 服务层",
+      "documentation": "server/CLAUDE.md",
+      "entry": "server/router.go",
+      "interfaces": [],
+      "tests": null,
+      "config": null,
+      "data_models": null,
+      "created": true
+    },
+    {
+      "path": "proto",
+      "name": "协议定义",
+      "documentation": "proto/CLAUDE.md",
+      "entry": null,
+      "interfaces": [],
+      "tests": null,
+      "config": null,
+      "data_models": null,
+      "created": true
+    },
+    {
+      "path": "utils",
+      "name": "工具库",
+      "documentation": "utils/CLAUDE.md",
+      "entry": null,
+      "interfaces": [],
+      "tests": "utils/crypto_test.go, utils/utils_test.go",
+      "config": null,
+      "data_models": null,
+      "created": true
+    },
+    {
+      "path": "synctv-web",
+      "name": "前端应用",
+      "documentation": "synctv-web/CLAUDE.md",
+      "entry": "synctv-web/src/main.ts",
+      "interfaces": [],
+      "tests": null,
+      "config": null,
+      "data_models": null,
+      "created": true
+    },
+    {
+      "path": "vendors",
+      "name": "厂商后端",
+      "documentation": "vendors/CLAUDE.md",
+      "entry": "vendors/main.go, vendors/cmd/server/main.go",
+      "interfaces": [],
+      "tests": "vendors/vendors/bilibili/bilibili_test.go, vendors/vendors/emby/emby_test.go, vendors/vendors/alist/alist_test.go",
+      "config": "vendors/conf/",
+      "data_models": null,
+      "created": true
+    },
+    {
+      "path": "public",
+      "name": "静态资源",
+      "documentation": "public/CLAUDE.md",
+      "entry": "public/public.go",
+      "interfaces": [],
+      "tests": null,
+      "config": null,
+      "data_models": null,
+      "created": true
+    }
+  ],
+  "coverage": {
+    "total_modules": 20,
+    "modules_with_docs": 20,
+    "coverage_percent": 100
+  },
+  "ignored": {
+    "directories": [
+      ".git",
+      ".github",
+      "node_modules",
+      "dist",
+      "build"
+    ],
+    "patterns": [
+      "*.lock",
+      "*.log",
+      "*.bin",
+      "*.pdf",
+      "*.png",
+      "*.jpg",
+      "*.jpeg",
+      "*.gif",
+      "*.mp4",
+      "*.zip",
+      "*.tar",
+      "*.gz"
+    ]
+  },
+  "truncated": false,
+  "gaps": [
+    {
+      "module": "server/handlers",
+      "description": "handlers 子目录暂未生成独立文档，内容已包含在 server/CLAUDE.md 中"
+    },
+    {
+      "module": "server/middlewares",
+      "description": "middlewares 子目录暂未生成独立文档，内容已包含在 server/CLAUDE.md 中"
+    },
+    {
+      "module": "server/oauth2",
+      "description": "oauth2 子目录暂未生成独立文档，内容已包含在 server/CLAUDE.md 中"
+    },
+    {
+      "module": "server/static",
+      "description": "static 子目录暂未生成独立文档，内容已包含在 server/CLAUDE.md 中"
+    }
+  ],
+  "recommendations": [
+    {
+      "priority": "medium",
+      "action": "为 server/handlers、server/middlewares、server/oauth2、server/static 生成独立模块文档",
+      "reason": "这些子目录已有较多文件，可以独立成模块文档"
+    },
+    {
+      "priority": "low",
+      "action": "补充各模块的测试策略文档",
+      "reason": "当前模块文档中测试信息较少"
+    }
+  ]
+}
