@@ -73,6 +73,27 @@ func genMovieInfo(
 		if err != nil {
 			return nil, err
 		}
+	case movie.VendorInfo.Vendor == dbModel.VendorScreenShare:
+		// 屏幕共享流，生成播放 URL
+		movie.URL = fmt.Sprintf(
+			"/api/room/movie/live/hls/list/%s.m3u8?token=%s&roomId=%s",
+			movie.ID,
+			userToken,
+			opMovie.RoomID,
+		)
+		movie.Type = "m3u8"
+		movie.Live = true
+		movie.MoreSources = append(movie.MoreSources, &dbModel.MoreSource{
+			Name: "flv",
+			URL: fmt.Sprintf(
+				"/api/room/movie/live/flv/%s.flv?token=%s&roomId=%s",
+				movie.ID,
+				userToken,
+				opMovie.RoomID,
+			),
+			Type: "flv",
+		})
+		movie.Headers = nil
 	case movie.RtmpSource:
 		movie.URL = fmt.Sprintf(
 			"/api/room/movie/live/hls/list/%s.m3u8?token=%s&roomId=%s",
@@ -1155,4 +1176,93 @@ func ServeHlsLive(ctx *gin.Context) {
 			model.NewAPIErrorResp(FormatNotSupportFileTypeError(fileExt)),
 		)
 	}
+}
+
+// 屏幕共享推流接收
+func ScreenSharePushStream(ctx *gin.Context) {
+	room := middlewares.GetRoomEntry(ctx).Value()
+	user := middlewares.GetUserEntry(ctx).Value()
+	log := middlewares.GetLogger(ctx)
+
+	movieID := ctx.Param("movieId")
+
+	// 验证权限
+	if !user.HasRoomPermission(room, dbModel.PermissionGetMovieList) {
+		ctx.AbortWithStatusJSON(
+			http.StatusForbidden,
+			model.NewAPIErrorResp(dbModel.ErrNoPermission),
+		)
+		return
+	}
+
+	// 获取影片
+	movie, err := room.GetMovieByID(movieID)
+	if err != nil {
+		log.Errorf("get movie by id error: %v", err)
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, model.NewAPIErrorResp(err))
+		return
+	}
+
+	// 验证影片是否为屏幕共享类型
+	if movie.VendorInfo.Vendor != dbModel.VendorScreenShare {
+		log.Error("movie is not screen share type")
+		ctx.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			model.NewAPIErrorStringResp("movie is not screen share type"),
+		)
+		return
+	}
+
+	// 验证是否为创建者
+	if movie.CreatorID != user.ID {
+		log.Errorf("screen share permission denied: user %s is not creator %s", user.ID, movie.CreatorID)
+		ctx.AbortWithStatusJSON(
+			http.StatusForbidden,
+			model.NewAPIErrorResp(
+				fmt.Errorf("only creator can push screen share stream"),
+			),
+		)
+		return
+	}
+
+	// 获取 Channel
+	c, err := movie.Channel()
+	if err != nil {
+		log.Errorf("get movie channel error: %v", err)
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, model.NewAPIErrorResp(err))
+		return
+	}
+
+	// 初始化 HLS player（如果尚未初始化）
+	if !c.IsHLSInit() {
+		if err := c.InitHlsPlayer(hls.WithGenTsNameFunc(genTSName)); err != nil {
+			log.Errorf("init hls player error: %v", err)
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, model.NewAPIErrorResp(err))
+			return
+		}
+	}
+
+	// 检查是否是 POST 请求且包含流数据
+	if ctx.Request.Method == http.MethodPost && ctx.Request.ContentLength > 0 {
+		log.Infof("screen share stream started: movieId=%s, userId=%s", movieID, user.ID)
+
+		// 使用 flv.NewReader 包装请求体，推送到 Channel
+		if err := c.PushStart(flv.NewReader(ctx.Request.Body)); err != nil {
+			log.Errorf("push screen share stream error: %v", err)
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, model.NewAPIErrorResp(err))
+			return
+		}
+
+		// 流处理完成
+		log.Infof("screen share stream ended: movieId=%s, userId=%s", movieID, user.ID)
+	}
+
+	// 返回成功响应
+	ctx.JSON(http.StatusOK, model.NewAPIDataResp(map[string]interface{}{
+		"status":   "ready",
+		"movieId":  movieID,
+		"hlsUrl":   fmt.Sprintf("/api/room/movie/live/hls/list/%s.m3u8", movieID),
+		"flvUrl":   fmt.Sprintf("/api/room/movie/live/flv/%s", movieID),
+		"note":     "FLV stream receiver endpoint ready, send FLV data via POST",
+	}))
 }

@@ -172,12 +172,13 @@ func (m *Movie) compareAndSwapInitChannel() (*rtmps.Channel, bool) {
 }
 
 func (m *Movie) initChannel() (*rtmps.Channel, error) {
-	if !m.Live || (!m.RtmpSource && !m.Proxy) {
-		return nil, errors.New("this movie not support channel")
+	// 屏幕共享和 RTMP source 都使用相同的 Channel 逻辑
+	if m.VendorInfo.Vendor == model.VendorScreenShare || m.RtmpSource {
+		return m.initRtmpSourceChannel()
 	}
 
-	if m.RtmpSource {
-		return m.initRtmpSourceChannel()
+	if !m.Live || (!m.Proxy) {
+		return nil, errors.New("this movie not support channel")
 	}
 
 	// Handle proxy case
@@ -345,6 +346,9 @@ func (m *Movie) validateURLAndProxy() error {
 	}
 
 	switch {
+	case m.VendorInfo.Vendor == model.VendorScreenShare:
+		// 屏幕共享影片，不需要验证 URL
+		return nil
 	case m.Live && m.RtmpSource:
 		return nil
 	case m.Live && m.Proxy:
@@ -411,6 +415,28 @@ func (m *Movie) validateVendorMovie() error {
 
 	case model.VendorEmby:
 		return m.VendorInfo.Emby.Validate()
+
+	case model.VendorScreenShare:
+		// 屏幕共享影片验证
+		if m.VendorInfo.ScreenShareConfig == nil {
+			return errors.New("screen share config is required")
+		}
+		// 验证质量选项
+		quality := m.VendorInfo.ScreenShareConfig.Quality
+		if quality != "high" && quality != "medium" && quality != "low" {
+			return errors.New("invalid screen share quality, must be high/medium/low")
+		}
+		// 验证帧率
+		frameRate := m.VendorInfo.ScreenShareConfig.FrameRate
+		if frameRate != 15 && frameRate != 30 {
+			return errors.New("invalid screen share frame rate, must be 15 or 30")
+		}
+		// 验证码率
+		bitrate := m.VendorInfo.ScreenShareConfig.Bitrate
+		if bitrate == 0 || bitrate > 5000 {
+			return errors.New("invalid screen share bitrate, must be between 1 and 5000 kbps")
+		}
+		return nil
 
 	default:
 		return errors.New("vendor not implement validate")

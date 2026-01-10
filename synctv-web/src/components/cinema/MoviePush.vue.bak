@@ -11,14 +11,12 @@ import customSubtitles from "@/components/cinema/dialogs/customSubtitles.vue";
 import bilibiliParse from "@/components/cinema/dialogs/bilibiliParse.vue";
 import alist from "@/components/fileList/alist.vue";
 import emby from "@/components/fileList/emby.vue";
-import screenSharePublisher from "@/components/cinema/dialogs/screenSharePublisher.vue";
 
 const customHeadersDialog = ref<InstanceType<typeof customHeaders>>();
 const customSubtitlesDialog = ref<InstanceType<typeof customSubtitles>>();
 const bilibiliParseDialog = ref<InstanceType<typeof bilibiliParse>>();
 const alistDialog = ref<InstanceType<typeof alist>>();
 const embyDialog = ref<InstanceType<typeof emby>>();
-const screenSharePublisherDialog = ref<InstanceType<typeof screenSharePublisher>>();
 
 const Props = defineProps<{
   token: string;
@@ -46,8 +44,7 @@ enum pushType {
   RTMP_SOURCE,
   BILIBILI,
   ALIST,
-  EMBY,
-  SCREEN_SHARE
+  EMBY
 }
 
 interface movieTypeRecord {
@@ -165,17 +162,6 @@ const movieTypeRecords: Map<pushType, movieTypeRecord> = new Map([
     }
   ],
   [
-    pushType.SCREEN_SHARE,
-    {
-      name: "屏幕共享",
-      comment: "共享屏幕到房间",
-      advanced: true,
-      showProxy: false,
-      defaultType: "m3u8",
-      allowedTypes: []
-    }
-  ],
-  [
     pushType.DIR,
     {
       name: "文件夹",
@@ -271,26 +257,6 @@ const selectPushType = () => {
         }
       };
       break;
-    case pushType.SCREEN_SHARE:
-      newMovieInfo.value = {
-        url: "",
-        name: newMovieInfo.value.name,
-        type: movieTypeRecords.get(selectedMovieType.value)?.defaultType || "",
-        proxy: false,
-        live: true,
-        rtmpSource: false,
-        headers: {},
-        vendorInfo: {
-          vendor: "screencast",
-          screenShareConfig: {
-            includeAudio: screenShareConfig.value.includeAudio,
-            quality: screenShareConfig.value.quality,
-            frameRate: screenShareConfig.value.frameRate,
-            bitrate: screenShareConfig.value.bitrate
-          }
-        }
-      };
-      break;
     case pushType.DIR:
       newMovieInfo.value = {
         url: newMovieInfo.value.url,
@@ -326,10 +292,6 @@ const updateSubtitles = (
 
 const biliParse = () => {
   bilibiliParseDialog.value?.openDialog();
-};
-
-const openScreenSharePublisher = () => {
-  screenSharePublisherDialog.value?.openDialog();
 };
 
 // 把视频链接添加到列表
@@ -368,13 +330,6 @@ const pushMovie = async () => {
       type: "success"
     });
     newMovieInfo.value.name = newMovieInfo.value.url = "";
-
-    // 如果是屏幕共享类型，打开推流对话框
-    if (selectedMovieType.value === pushType.SCREEN_SHARE) {
-      setTimeout(() => {
-        screenSharePublisherDialog.value?.openDialog();
-      }, 500);
-    }
   } catch (err: any) {
     console.log(err);
     ElNotification({
@@ -417,29 +372,6 @@ const getBiliBiliVendors = async () => {
       message: err.response.data.error || err.message,
       type: "error"
     });
-  }
-};
-
-// 屏幕共享配置
-const screenShareConfig = ref({
-  includeAudio: true,
-  quality: "high",
-  frameRate: 30,
-  bitrate: 2000
-});
-
-const qualityOptions = [
-  { name: "高清", value: "high", bitrate: 2000, frameRate: 30 },
-  { name: "标清", value: "medium", bitrate: 1000, frameRate: 15 },
-  { name: "流畅", value: "low", bitrate: 500, frameRate: 15 }
-];
-
-const updateQuality = (quality: string) => {
-  const option = qualityOptions.find(opt => opt.value === quality);
-  if (option) {
-    screenShareConfig.value.quality = option.value;
-    screenShareConfig.value.bitrate = option.bitrate;
-    screenShareConfig.value.frameRate = option.frameRate;
   }
 };
 </script>
@@ -511,14 +443,6 @@ const updateQuality = (quality: string) => {
           <span class="text-sm min-w-fit"> 从 Emby 中选择 </span>
         </div>
       </div>
-      <div class="w-full" v-if="selectedMovieType === pushType.SCREEN_SHARE">
-        <input
-          type="text"
-          placeholder="共享名称"
-          class="l-input-slate w-full"
-          v-model="newMovieInfo.name"
-        />
-      </div>
     </div>
     <div class="mx-5" v-if="movieTypeRecords.get(selectedMovieType)?.advanced">
       <el-collapse @change="" class="bg-transparent" style="background: #aaa0 !important">
@@ -568,27 +492,6 @@ const updateQuality = (quality: string) => {
               <span class="text-sm min-w-fit"> 添加字幕</span>
             </div>
           </Transition>
-          <Transition name="fade">
-            <div class="more-option-list" v-if="selectedMovieType === pushType.SCREEN_SHARE">
-              <span class="text-sm min-w-fit"> 视频质量： </span>
-              <select v-model="screenShareConfig.quality" @change="updateQuality(screenShareConfig.quality)" class="bg-transparent p-0 text-base w-full h-5">
-                <option v-for="opt in qualityOptions" :value="opt.value">
-                  {{ opt.name }}
-                </option>
-              </select>
-            </div>
-          </Transition>
-          <Transition name="fade">
-            <div class="more-option-list" v-if="selectedMovieType === pushType.SCREEN_SHARE">
-              <label>共享系统音频：
-                <input
-                  type="checkbox"
-                  v-model="screenShareConfig.includeAudio"
-                  :value="true"
-                  :unchecked-value="false"
-              /></label>
-            </div>
-          </Transition>
         </el-collapse-item>
       </el-collapse>
     </div>
@@ -610,7 +513,7 @@ const updateQuality = (quality: string) => {
         <button class="btn btn-warning" @click="biliParse()">解析</button>
       </div>
 
-      <button v-else-if="selectedMovieType < pushType.BILIBILI || selectedMovieType === pushType.SCREEN_SHARE" class="btn" @click="pushMovie()">
+      <button v-else-if="selectedMovieType < pushType.BILIBILI" class="btn" @click="pushMovie()">
         添加到列表
       </button>
     </div>
@@ -644,15 +547,6 @@ const updateQuality = (quality: string) => {
 
   <!-- Emby 文件列表 -->
   <emby ref="embyDialog" :token="token" :room-id="roomId" />
-
-  <!-- 屏幕共享推流器 -->
-  <screenSharePublisher
-    ref="screenSharePublisherDialog"
-    :token="token"
-    :room-id="roomId"
-    :movie-id="newMovieInfo.id"
-    :movie-info="newMovieInfo"
-  />
 </template>
 
 <style lang="less" scoped>

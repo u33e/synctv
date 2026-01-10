@@ -177,14 +177,52 @@ const (
 	VendorBilibili VendorName = "bilibili"
 	VendorAlist    VendorName = "alist"
 	VendorEmby     VendorName = "emby"
+	VendorScreenShare VendorName = "screencast"
 )
 
+type ScreenShareConfig struct {
+	IncludeAudio bool   `json:"includeAudio"`
+	Quality      string  `json:"quality"`     // high/medium/low
+	FrameRate    uint32  `json:"frameRate"`   // 30/15
+	Bitrate      uint32  `json:"bitrate"`     // kbps
+}
+
+func (s *ScreenShareConfig) GetVideoConstraints() map[string]interface{} {
+	switch s.Quality {
+	case "high":
+		return map[string]interface{}{
+			"width":      map[string]int{"ideal": 1920, "max": 1920},
+			"height":     map[string]int{"ideal": 1080, "max": 1080},
+			"frameRate":  map[string]int{"ideal": 30, "max": 30},
+		}
+	case "medium":
+		return map[string]interface{}{
+			"width":      map[string]int{"ideal": 1280, "max": 1280},
+			"height":     map[string]int{"ideal": 720, "max": 720},
+			"frameRate":  map[string]int{"ideal": 15, "max": 15},
+		}
+	case "low":
+		return map[string]interface{}{
+			"width":      map[string]int{"ideal": 640, "max": 640},
+			"height":     map[string]int{"ideal": 480, "max": 480},
+			"frameRate":  map[string]int{"ideal": 15, "max": 15},
+		}
+	default:
+		return map[string]interface{}{
+			"width":      map[string]int{"ideal": 1920, "max": 1920},
+			"height":     map[string]int{"ideal": 1080, "max": 1080},
+			"frameRate":  map[string]int{"ideal": 30, "max": 30},
+		}
+	}
+}
+
 type VendorInfo struct {
-	Bilibili *BilibiliStreamingInfo `gorm:"embedded;embeddedPrefix:bilibili_" json:"bilibili,omitempty"`
-	Alist    *AlistStreamingInfo    `gorm:"embedded;embeddedPrefix:alist_"    json:"alist,omitempty"`
-	Emby     *EmbyStreamingInfo     `gorm:"embedded;embeddedPrefix:emby_"     json:"emby,omitempty"`
-	Vendor   VendorName             `gorm:"type:varchar(32)"                  json:"vendor"`
-	Backend  string                 `gorm:"type:varchar(64)"                  json:"backend"`
+	Bilibili        *BilibiliStreamingInfo `gorm:"embedded;embeddedPrefix:bilibili_" json:"bilibili,omitempty"`
+	Alist           *AlistStreamingInfo    `gorm:"embedded;embeddedPrefix:alist_"    json:"alist,omitempty"`
+	Emby            *EmbyStreamingInfo     `gorm:"embedded;embeddedPrefix:emby_"     json:"emby,omitempty"`
+	ScreenShare     *ScreenShareConfig     `gorm:"serializer:fastjson;type:text"        json:"screenShareConfig,omitempty"`
+	Vendor          VendorName             `gorm:"type:varchar(32)"                           json:"vendor"`
+	Backend         string                 `gorm:"type:varchar(64)"                           json:"backend"`
 }
 
 type BilibiliStreamingInfo struct {

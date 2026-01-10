@@ -54,6 +54,9 @@ export interface VendorInfo {
   vendor: string;
   bilibili?: BilibiliVendorInfo;
   backend?: string;
+  alist?: AlistVendorInfo;
+  emby?: EmbyVendorInfo;
+  screenShareConfig?: ScreenShareConfig;
 }
 
 export interface BilibiliBaseInfo {
@@ -72,4 +75,15 @@ export interface BilibiliVideoInfos extends BilibiliBaseInfo {
   live: boolean;
   coverImage: string;
   proxy: boolean;
+}
+
+export interface AlistVendorInfo {}
+
+export interface EmbyVendorInfo {}
+
+export interface ScreenShareConfig {
+  includeAudio: boolean;
+  quality: 'high' | 'medium' | 'low';
+  frameRate: number;
+  bitrate: number;
 }

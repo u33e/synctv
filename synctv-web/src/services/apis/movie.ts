@@ -188,3 +188,12 @@ export const liveInfoApi = useDefineApi<
   url: "/api/room/movie/live/publishKey",
   method: "POST"
 });
+
+// 屏幕共享推流响应
+export interface ScreenSharePushResponse {
+  status: string;
+  movieId: string;
+  hlsUrl: string;
+  flvUrl: string;
+  note: string;
+}
